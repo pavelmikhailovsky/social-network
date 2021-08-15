@@ -44,7 +44,8 @@ INSTALLED_APPS = [
 
     # utils
     'rest_framework',
-    'drf_yasg'
+    'drf_yasg',
+    'versatileimagefield',
 ]
 
 MIDDLEWARE = [
