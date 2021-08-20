@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, parsers, permissions, status
+from rest_framework.response import Response
 
-from . import serializers
-from .models import UserImage
+from . import serializers, paginations
 
 User = get_user_model()
 
@@ -14,28 +14,19 @@ class UsersViewSet(viewsets.GenericViewSet,
                    mixins.DestroyModelMixin):
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
+    parser_classes = [parsers.FormParser, parsers.MultiPartParser]
+    pagination_class = paginations.CustomPageNumberPagination
 
 
 class CreateUserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     queryset = User.objects.all()
     serializer_class = serializers.CreateUserSerializer
+    permission_classes = [permissions.AllowAny]
+    parser_classes = [parsers.FormParser, parsers.MultiPartParser]
 
-
-# class ImageUserUpdateViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
-#     queryset = UserImage.objects.all()
-#     serializer_class = serializers.ImageUserSerializer
-#
-#     def create(self, request, *args, **kwargs):
-#         self.data_request = request.data
-#         super(ImageUserUpdateViewSet, self).create(request, *args, **kwargs)
-#
-#     def add_image_to_user(self):
-#         if not self.request.user.is_anonymous:
-#             user = User.objects.get(self.request.user)
-#             user_image = user.image.add(self.data_request)
-#             user_image.save()
-#
-#     def perform_create(self, serializer):
-#         self.add_image_to_user()
-#         serializer.save()
-#
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'status': 'created'}, status=status.HTTP_201_CREATED, headers=headers)

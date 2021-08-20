@@ -19,11 +19,11 @@ class CustomUserCreationForm(UserCreationForm):
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        (None, {'fields': ('status', 'avatar_image', 'profile_image')}),
+        (None, {'fields': ('status', 'image',)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': ('status', 'avatar_image', 'profile_image')}),
+        (None, {'fields': ('status', 'image',)}),
     )
-    form =CustomUserChangeForm
+    form = CustomUserChangeForm
     add_form = CustomUserCreationForm
 
