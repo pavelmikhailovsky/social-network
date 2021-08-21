@@ -1,8 +1,3 @@
-from datetime import datetime, timedelta
-
-import jwt
-
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -11,6 +6,7 @@ from . import validators
 
 
 class User(AbstractUser):
+    """ Model users """
     username = models.CharField(
         _('username'),
         max_length=150,
@@ -34,27 +30,24 @@ class User(AbstractUser):
     )
     status = models.CharField(max_length=500, blank=True, null=True)
     image = models.ImageField(upload_to='', blank=True, null=True)
+    subscribers = models.ManyToManyField(
+        'self',
+        related_name='user_subscribers',
+        blank=True,
+        symmetrical=False
+    )
+    subscribed_on_users = models.ManyToManyField(
+        'self', related_name='subscribed',
+        blank=True,
+        symmetrical=False
+    )
+    indicator = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         self.first_name = self.first_name.capitalize()
         self.last_name = self.last_name.capitalize()
         self.username = f'{self.first_name}{self.last_name}'
         super().save(*args, **kwargs)
-
-    @property
-    def token(self):
-        """ Get token """
-        return self._generate_jwt_token()
-
-    def _generate_jwt_token(self):
-        """ Generate web token JSON """
-        dt = datetime.now() + timedelta(days=1)
-
-        token = jwt.encode({
-            'id': self.pk,
-            'exp': int(dt.strftime('%s'))
-        }, settings.SECRET_KEY, algorithm='HS256')
-        return token.decode('utf-8')
 
     class Meta(AbstractUser.Meta):
         swappable = 'AUTH_USER_MODEL'

@@ -22,7 +22,7 @@ class CustomUserAdmin(UserAdmin):
         (None, {'fields': ('status', 'image',)}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': ('status', 'image',)}),
+        (None, {'fields': ('status', 'image', 'first_name', 'last_name')}),
     )
     form = CustomUserChangeForm
     add_form = CustomUserCreationForm
