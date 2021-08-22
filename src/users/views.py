@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 
 from . import serializers, paginations
+from .permissions import IsNotAuthenticated
 
 User = get_user_model()
 
@@ -13,14 +14,18 @@ class UsersViewSet(viewsets.GenericViewSet,
                    mixins.ListModelMixin,
                    mixins.RetrieveModelMixin,
                    mixins.DestroyModelMixin):
-    """ API endpoint for output all users """
+    """
+    API endpoint for output all users.
+    """
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.FormParser, parsers.MultiPartParser]
     pagination_class = paginations.CustomPageNumberPagination
 
     def destroy(self, request, *args, **kwargs):
-        """ Destroy users if user is staff """
+        """
+        Destroy users if user is staff.
+        """
         if self.request.user.is_staff:
             instance = self.get_object()
             self.perform_destroy(instance)
@@ -29,7 +34,9 @@ class UsersViewSet(viewsets.GenericViewSet,
 
     @decorators.action(detail=True, url_path='subscribe-on-user')
     def subscribe_on_user(self, request, *args, **kwargs):
-        """ Subscribe on news user """
+        """
+        Subscribe on news user.
+        """
         if self.request.user.is_authenticated:
             subscribe_user = self.get_object()
             instance = self.request.user
@@ -38,23 +45,28 @@ class UsersViewSet(viewsets.GenericViewSet,
             return Response({'status': 'subscribed'}, status=status.HTTP_200_OK)
         return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
 
-    def retrieve(self, request, *args, **kwargs):
+    @decorators.action(detail=True, url_path='check-subscriber')
+    def check_subscriber(self, *args, **kwargs):
         """
-        If the current user is subscribed to the viewed profile, indicator = 1 otherwise 0
+        If the current user is subscribed to the viewed profile, subscriber = true otherwise false.
         """
         if self.request.user.is_authenticated:
             instance = self.get_object()
-            if self.request.user.subscribed_on_users.get(username=instance.username):
-                serializer = serializers.UserWithIndicatorSerializer(instance)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            # return Response(serializer.data, status=status.HTTP_200_OK)
+            try:
+                if self.request.user.subscribed_on_users.get(username=instance.username):
+                    return Response({'subscriber': True}, status=status.HTTP_200_OK)
+            except Exception:
+                return Response({'subscriber': False}, status=status.HTTP_200_OK)
+        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
 
 
 class CreateUserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
-    """ API endpoint for create users """
+    """
+    API endpoint for create users.
+    """
     queryset = User.objects.all()
     serializer_class = serializers.CreateUserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsNotAuthenticated]
     parser_classes = [parsers.FormParser, parsers.MultiPartParser]
 
     def create(self, request, *args, **kwargs):
@@ -72,7 +84,9 @@ class CreateUserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 
 
 class MeUserInformationVewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
-    """ API endpoint for output information o user """
+    """
+    API endpoint for output information o user.
+    """
     queryset = User.objects.all()
     serializer_class = serializers.MeUserInformationSerializer
     parser_classes = [parsers.FormParser, parsers.MultiPartParser]
@@ -87,7 +101,9 @@ class MeUserInformationVewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     @swagger_auto_schema(responses={401: '{"detail": "No credentials were provided."}'})
     @decorators.action(detail=False, methods=['patch'], url_path='partial-settings')
     def partial_settings(self, request):
-        """ Partial update user account """
+        """
+        Partial update user account.
+        """
         instance = self.request.user
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -97,7 +113,9 @@ class MeUserInformationVewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     @swagger_auto_schema(responses={200: '{"status": "deleted"}', 401: '{"detail": "No credentials were provided."}'})
     @decorators.action(detail=False, methods=['delete'], url_path='remove-account')
     def remove_account(self, request):
-        """ Remove user account """
+        """
+        Remove user account.
+        """
         instance = self.request.user
         instance.delete()
         return Response({'status': 'deleted'}, status=status.HTTP_200_OK)

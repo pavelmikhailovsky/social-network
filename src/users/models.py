@@ -6,7 +6,9 @@ from . import validators
 
 
 class User(AbstractUser):
-    """ Model users """
+    """
+    Model users.
+    """
     username = models.CharField(
         _('username'),
         max_length=150,
@@ -41,7 +43,6 @@ class User(AbstractUser):
         blank=True,
         symmetrical=False
     )
-    indicator = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         self.first_name = self.first_name.capitalize()
