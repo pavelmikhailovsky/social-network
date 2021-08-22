@@ -1,35 +1,61 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_flex_fields import FlexFieldsModelSerializer
-from versatileimagefield.serializers import VersatileImageFieldSerializer
-
-from .models import UserImage
 
 User = get_user_model()
 
 
-class ImageUserSerializer(FlexFieldsModelSerializer):
-    avatar = VersatileImageFieldSerializer(required=False, sizes=[('full_size', 'url')])
-
+class SubscribeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for subscriptions.
+    """
     class Meta:
-        model = UserImage
-        fields = ('avatar',)
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'image']
 
 
-class UserSerializer(FlexFieldsModelSerializer):
-    image = ImageUserSerializer()
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for users.
+    """
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    subscribers = SubscribeSerializer(read_only=True, many=True)
+    subscribed_on_users = SubscribeSerializer(read_only=True, many=True)
 
     class Meta:
         model = User
         ref_name = 'user'
-        fields = ('id', 'username', 'is_staff', 'is_superuser', 'status', 'image')
+        fields = [
+            'id', 'username', 'first_name', 'last_name',
+            'is_staff', 'is_superuser', 'status', 'image',
+            'email', 'subscribers', 'subscribed_on_users',
+        ]
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
-    status = serializers.CharField(required=False)
-    email = serializers.EmailField(required=False)
+    username = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
         ref_name = 'create'
-        fields = ['username', 'password', 'email', 'status']
+        fields = [
+            'id', 'username', 'first_name', 'last_name',
+            'password', 'email', 'status', 'image'
+        ]
+
+
+class MeUserInformationSerializer(UserSerializer):
+    """
+    Serializer for output information o users.
+    """
+    username = serializers.CharField(read_only=True)
+    password = serializers.CharField(required=False)
+    image = serializers.ImageField(read_only=False, required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'last_name', 'first_name',
+            'password', 'email', 'status', 'image',
+            'subscribers', 'subscribed_on_users',
+        ]
