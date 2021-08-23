@@ -24,7 +24,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        ref_name = 'user'
         fields = [
             'id', 'username', 'first_name', 'last_name',
             'is_staff', 'is_superuser', 'status', 'image',
@@ -37,7 +36,6 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        ref_name = 'create'
         fields = [
             'id', 'username', 'first_name', 'last_name',
             'password', 'email', 'status', 'image'

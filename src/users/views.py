@@ -38,7 +38,7 @@ class UsersViewSet(viewsets.GenericViewSet,
             return Response({'status': f'{action}d'}, status=status.HTTP_200_OK)
         return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
 
-    @swagger_auto_schema(responses={200: '{"status": "ok"}', 405: '{"permission error": "user is not staff"}'})
+    @swagger_auto_schema(responses={200: '{"status": "deleted"}', 405: '{"permission error": "user is not staff"}'})
     def destroy(self, request, *args, **kwargs):
         """
         Destroy users if user is staff.
@@ -46,7 +46,7 @@ class UsersViewSet(viewsets.GenericViewSet,
         if self.request.user.is_staff:
             instance = self.get_object()
             self.perform_destroy(instance)
-            return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+            return Response({'status': 'deleted'}, status=status.HTTP_200_OK)
         return Response({'permission error': 'user is not staff'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @swagger_auto_schema(responses={200: '{"status": "subscribed"}', 423: '{"status": "not authorization"}'})
