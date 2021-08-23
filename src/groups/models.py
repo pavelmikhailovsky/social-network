@@ -9,7 +9,9 @@ class Groups(models.Model):
     create_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='image-group/', blank=True)
     description = models.TextField(max_length=10000)
+    # owner =
     # administrators =
+    # redactors =
     # subscribers =
     category = models.CharField(max_length=150)  # in future or model or choices field
 
@@ -30,7 +32,7 @@ class Post(models.Model):
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
     text = models.TextField()
-    image = models.ImageField(upload_to='image-post/', blank=True)
+    image = models.ImageField(upload_to='image-post/', blank=True, null=True)
     group = models.ForeignKey(Groups, on_delete=models.CASCADE)
     like = models.PositiveBigIntegerField(default=0)
 
