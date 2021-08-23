@@ -22,6 +22,23 @@ class UsersViewSet(viewsets.GenericViewSet,
     parser_classes = [parsers.FormParser, parsers.MultiPartParser]
     pagination_class = paginations.CustomPageNumberPagination
 
+    def subscriptions(self, action, *args, **kwargs):
+        """
+        Subscriptions method on user news.
+        """
+        if self.request.user.is_authenticated:
+            subscribe_user = self.get_object()
+            current_user = self.request.user
+            if action == 'subscribe':
+                subscribe_user.subscribers.add(current_user)
+                current_user.subscribed_on_users.add(subscribe_user)
+            elif action == 'unsubscribe':
+                subscribe_user.subscribers.remove(current_user)
+                current_user.subscribed_on_users.remove(subscribe_user)
+            return Response({'status': f'{action}d'}, status=status.HTTP_200_OK)
+        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
+
+    @swagger_auto_schema(responses={200: '{"status": "deleted"}', 405: '{"permission error": "user is not staff"}'})
     def destroy(self, request, *args, **kwargs):
         """
         Destroy users if user is staff.
@@ -29,22 +46,18 @@ class UsersViewSet(viewsets.GenericViewSet,
         if self.request.user.is_staff:
             instance = self.get_object()
             self.perform_destroy(instance)
-            return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+            return Response({'status': 'deleted'}, status=status.HTTP_200_OK)
         return Response({'permission error': 'user is not staff'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    @swagger_auto_schema(responses={200: '{"status": "subscribed"}', 423: '{"status": "not authorization"}'})
     @decorators.action(detail=True, url_path='subscribe-on-user')
-    def subscribe_on_user(self, request, *args, **kwargs):
+    def subscribe_on_user(self, *args, **kwargs):
         """
         Subscribe on news user.
         """
-        if self.request.user.is_authenticated:
-            subscribe_user = self.get_object()
-            instance = self.request.user
-            subscribe_user.subscribers.add(instance)
-            instance.subscribed_on_users.add(subscribe_user)
-            return Response({'status': 'subscribed'}, status=status.HTTP_200_OK)
-        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
+        return self.subscriptions('subscribe', *args, **kwargs)
 
+    @swagger_auto_schema(responses={200: '{"subscriber": "true of false"}', 423: '{"status": "not authorization"}'})
     @decorators.action(detail=True, url_path='check-subscriber')
     def check_subscriber(self, *args, **kwargs):
         """
@@ -58,6 +71,14 @@ class UsersViewSet(viewsets.GenericViewSet,
             except Exception:
                 return Response({'subscriber': False}, status=status.HTTP_200_OK)
         return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
+
+    @swagger_auto_schema(responses={200: '{"status": "unsubscribed"}', 423: '{"status": "not authorization"}'})
+    @decorators.action(detail=True, url_path='unsubscribe-on-user')
+    def unsubscribe_on_user(self, *args, **kwargs):
+        """
+        Unsubscribe on news user.
+        """
+        return self.subscriptions('unsubscribe', *args, **kwargs)
 
 
 class CreateUserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
