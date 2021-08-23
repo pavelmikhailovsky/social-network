@@ -4,4 +4,4 @@ from . import views
 
 router = DefaultRouter()
 
-router.register('', views.GroupViewSet)
+router.register('', views.GroupInformationViewSet)
