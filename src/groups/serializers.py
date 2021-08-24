@@ -1,6 +1,11 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Count
 from rest_framework import serializers
 
 from . import models
+
+
+User = get_user_model()
 
 
 class GroupsAllInformationSerializer(serializers.ModelSerializer):
@@ -22,12 +27,26 @@ class PostsGroupSerializer(serializers.ModelSerializer):
         ]
 
 
+class UserSubscribersGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'image',
+        ]
+
+
 class GroupInformationSerializer(serializers.ModelSerializer):
+    owner = UserSubscribersGroupSerializer()
+    administrators = UserSubscribersGroupSerializer(many=True)
+    subscribers = UserSubscribersGroupSerializer(many=True)
+    redactors = UserSubscribersGroupSerializer(many=True)
+
     class Meta:
         model = models.Groups
         fields = [
             'id', 'name', 'image', 'category',
-            'description', 'create_at',
+            'owner', 'administrators', 'redactors',
+            'subscribers', 'description', 'create_at',
         ]
 
 
@@ -45,5 +64,6 @@ class CreateGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Groups
         fields = [
-            'name', 'image', 'category', 'description',
+            'id', 'name', 'image', 'category',
+            'description',
         ]

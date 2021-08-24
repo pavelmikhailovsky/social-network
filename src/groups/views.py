@@ -71,7 +71,7 @@ class CreateGroupViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
     queryset = models.Groups.objects.all()
     serializer_class = serializers.CreateGroupSerializer
     parser_classes = [parsers.FormParser, parsers.MultiPartParser]
-    # permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         """
@@ -80,9 +80,12 @@ class CreateGroupViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
+        group = models.Groups.objects.get(id=serializer.data['id'])
+        group.subscribers.add(request.user)
         return Response({'status': 'created'}, status=status.HTTP_201_CREATED)
 
-
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
 
