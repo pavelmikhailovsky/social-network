@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Count
 from rest_framework import serializers
 
 from . import models
@@ -67,3 +66,12 @@ class CreateGroupSerializer(serializers.ModelSerializer):
             'id', 'name', 'image', 'category',
             'description',
         ]
+
+
+class AddPersonalGroupSerializer(serializers.Serializer):
+    id_group = serializers.IntegerField()
+    id_user = serializers.IntegerField()
+
+
+class DeletePostSerializer(serializers.Serializer):
+    id_post = serializers.IntegerField()

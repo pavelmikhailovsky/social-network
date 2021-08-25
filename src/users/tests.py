@@ -75,15 +75,15 @@ class GetUsersTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(check_subscriber_anonymous_user.data, {'status': 'not authorization'})
 
-    def test_subscribe_unsubscribe_on_user(self):
-        response_subscribe = self.client.get(f'{URL}/{self.user.id}/subscribe-on-user/')
-        check_subscribe = self.client.get(f'{URL}/{self.user.id}/check-subscriber/')
-        response_unsubscribe = self.client.get(f'{URL}/{self.user.id}/unsubscribe-on-user/')
-        check_unsubscribe = self.client.get(f'{URL}/{self.user.id}/check-subscriber/')
+    def test_follow_unfollow_on_user(self):
+        response_subscribe = self.client.get(f'{URL}/{self.user.id}/follow/')
+        check_follow = self.client.get(f'{URL}/{self.user.id}/check-follow/')
+        response_unsubscribe = self.client.get(f'{URL}/{self.user.id}/follow/')
+        check_unfollow = self.client.get(f'{URL}/{self.user.id}/check-follow/')
         self.assertEqual(response_subscribe.data, {'status': 'subscribed'})
-        self.assertEqual(check_subscribe.data, {'subscriber': True})
+        self.assertEqual(check_follow.data, {'follow': True})
         self.assertEqual(response_unsubscribe.data, {'status': 'unsubscribed'})
-        self.assertEqual(check_unsubscribe.data, {'subscriber': False})
+        self.assertEqual(check_unfollow.data, {'follow': False})
 
     def test_destroy_users_account(self):
         response_not_staff = self.client.delete(f'{URL}/{self.user.id}/')
