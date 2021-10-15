@@ -17,13 +17,18 @@ class GroupsAllInformationSerializer(serializers.ModelSerializer):
 
 class PostsGroupSerializer(serializers.ModelSerializer):
     text = serializers.ModelField(model_field=models.Post._meta.get_field('text'), required=False)
+    like = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Post
         fields = [
             'id', 'create_at', 'update_at', 'text',
-            'like', 'group', 'image',
+            'like', 'image',
         ]
+
+    def get_like(self, obj):
+        like = obj.like
+        return like.users.all().count()
 
 
 class UserSubscribersGroupSerializer(serializers.ModelSerializer):
@@ -58,6 +63,12 @@ class CreatePostsSerializer(serializers.ModelSerializer):
             'text', 'image', 'group',
         ]
 
+    def create(self, validated_data):
+        like = models.Like.objects.create()
+        like.save()
+        validated_data['like'] = like
+        return models.Post.objects.create(**validated_data)
+
 
 class CreateGroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -73,5 +84,5 @@ class AddPersonalGroupSerializer(serializers.Serializer):
     id_user = serializers.IntegerField()
 
 
-class DeletePostSerializer(serializers.Serializer):
+class PostIdSerializer(serializers.Serializer):
     id_post = serializers.IntegerField()
