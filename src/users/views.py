@@ -22,22 +22,6 @@ class UsersViewSet(viewsets.GenericViewSet,
     parser_classes = [parsers.FormParser, parsers.MultiPartParser]
     pagination_class = paginations.CustomPageNumberPagination
 
-    def subscriptions(self, action, *args, **kwargs):
-        """
-        Subscriptions method on user news.
-        """
-        if self.request.user.is_authenticated:
-            subscribe_user = self.get_object()
-            current_user = self.request.user
-            if action == 'subscribe':
-                subscribe_user.subscribers.add(current_user)
-                current_user.subscribed_on_users.add(subscribe_user)
-            elif action == 'unsubscribe':
-                subscribe_user.subscribers.remove(current_user)
-                current_user.subscribed_on_users.remove(subscribe_user)
-            return Response({'status': f'{action}d'}, status=status.HTTP_200_OK)
-        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
-
     @swagger_auto_schema(responses={200: '{"status": "deleted"}', 405: '{"permission error": "user is not staff"}'})
     def destroy(self, request, *args, **kwargs):
         """
@@ -49,36 +33,45 @@ class UsersViewSet(viewsets.GenericViewSet,
             return Response({'status': 'deleted'}, status=status.HTTP_200_OK)
         return Response({'permission error': 'user is not staff'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @swagger_auto_schema(responses={200: '{"status": "subscribed"}', 423: '{"status": "not authorization"}'})
-    @decorators.action(detail=True, url_path='subscribe-on-user')
-    def subscribe_on_user(self, *args, **kwargs):
+    @swagger_auto_schema(responses=
+                         {200: '{"status": "subscribed or unsubscribed"}', 423: '{"status": "not authorization"}'})
+    @decorators.action(detail=True, url_path='follow')
+    def follow(self, *args, **kwargs):
         """
-        Subscribe on news user.
+        Follow/unfollow on news user.
         """
-        return self.subscriptions('subscribe', *args, **kwargs)
+        if self.request.user.is_authenticated:
+            subscribe_user = self.get_object()
+            current_user = self.request.user
 
-    @swagger_auto_schema(responses={200: '{"subscriber": "true of false"}', 423: '{"status": "not authorization"}'})
-    @decorators.action(detail=True, url_path='check-subscriber')
-    def check_subscriber(self, *args, **kwargs):
+            if not subscribe_user.subscribers.filter(id=current_user.id):
+                subscribe_user.subscribers.add(current_user)
+                current_user.subscribed_on_users.add(subscribe_user)
+                return Response({'status': 'subscribed'}, status=status.HTTP_200_OK)
+            else:
+                subscribe_user.subscribers.remove(current_user)
+                current_user.subscribed_on_users.remove(subscribe_user)
+                return Response({'status': 'unsubscribed'}, status=status.HTTP_200_OK)
+
+        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
+
+    @swagger_auto_schema(responses={200: '{"follow": "true of false"}', 423: '{"follow": "not authorization"}'})
+    @decorators.action(detail=True, url_path='check-follow')
+    def check_follow(self, *args, **kwargs):
         """
-        If the current user is subscribed to the viewed profile, subscriber = true otherwise false.
+        If the current user is subscribed to the viewed profile, follow = true otherwise false.
         """
         if self.request.user.is_authenticated:
             instance = self.get_object()
+
             try:
                 if self.request.user.subscribed_on_users.get(username=instance.username):
-                    return Response({'subscriber': True}, status=status.HTTP_200_OK)
-            except Exception:
-                return Response({'subscriber': False}, status=status.HTTP_200_OK)
-        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
+                    return Response({'follow': True}, status=status.HTTP_200_OK)
+            except Exception as e:
+                print(f'>>>> {e}')
+                return Response({'follow': False}, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(responses={200: '{"status": "unsubscribed"}', 423: '{"status": "not authorization"}'})
-    @decorators.action(detail=True, url_path='unsubscribe-on-user')
-    def unsubscribe_on_user(self, *args, **kwargs):
-        """
-        Unsubscribe on news user.
-        """
-        return self.subscriptions('unsubscribe', *args, **kwargs)
+        return Response({'status': 'not authorization'}, status=status.HTTP_423_LOCKED)
 
 
 class CreateUserViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
